@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SROI Attribution — Editable Assumptions</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1a2d4a;--navy-mid:#243a5e;--navy-light:#2e4a78;
+  --blue:#3d7fd4;--blue-dim:rgba(61,127,212,.15);--blue-glow:rgba(61,127,212,.08);
+  --teal:#2ec4a6;--teal-dim:rgba(46,196,166,.15);
+  --amber:#f4c94e;--amber-dim:rgba(244,201,78,.12);
+  --red:#e87a7a;--red-dim:rgba(232,122,122,.12);
+  --green:#4ade80;--green-dim:rgba(74,222,128,.12);
+  --purple:#a78bfa;--purple-dim:rgba(167,139,250,.12);
+  --text1:#e0e8f4;--text2:#8aaacf;--text3:#5a7a9c;
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.14);
+  --card:rgba(255,255,255,.04);--card-h:rgba(255,255,255,.07);
+  --r:10px;--rs:6px
+}
+body{background:var(--navy);color:var(--text1);font-family:'IBM Plex Sans Thai',sans-serif;font-size:14px;line-height:1.6;min-height:100vh}
+.wrap{max-width:1060px;margin:0 auto;padding:32px 20px 80px}
+
+/* ── HEADER ── */
+.hdr-tag{font-size:10px;letter-spacing:1.8px;color:var(--teal);text-transform:uppercase;margin-bottom:6px}
+h1{font-size:24px;font-weight:600;color:#fff;margin-bottom:4px}
+.hdr-sub{font-size:13px;color:var(--text2);margin-bottom:28px}
+
+/* ── LAYOUT ── */
+.layout{display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start}
+@media(max-width:860px){.layout{grid-template-columns:1fr}}
+
+/* ── TABLE PANEL ── */
+.panel{background:var(--card);border:0.5px solid var(--border2);border-radius:var(--r);padding:18px 20px;margin-bottom:16px}
+.panel-title{font-size:12px;font-weight:500;color:var(--text1);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.panel-title span{font-size:10px;color:var(--text3);font-weight:400}
+
+/* ── ASSUMPTION TABLE ── */
+.tbl-wrap{overflow-x:auto;border-radius:var(--rs);border:0.5px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:680px}
+thead th{background:rgba(0,0,0,.25);color:var(--text3);font-size:10px;letter-spacing:.7px;text-transform:uppercase;padding:10px 10px;text-align:left;border-bottom:0.5px solid var(--border2);font-weight:500;white-space:nowrap}
+tbody td{padding:7px 8px;border-bottom:0.5px solid var(--border);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:rgba(255,255,255,.02)}
+
+/* inline inputs inside table */
+.td-input{
+  background:rgba(0,0,0,.2);
+  border:0.5px solid var(--border2);
+  border-radius:4px;
+  color:var(--text1);
+  font-family:'IBM Plex Sans Thai',sans-serif;
+  font-size:12px;
+  padding:5px 8px;
+  outline:none;
+  width:100%;
+  transition:border-color .15s
+}
+.td-input:focus{border-color:var(--blue)}
+.td-select{
+  background:rgba(0,0,0,.25);
+  border:0.5px solid var(--border2);
+  border-radius:4px;
+  color:var(--text1);
+  font-family:'IBM Plex Sans Thai',sans-serif;
+  font-size:11px;
+  padding:5px 6px;
+  outline:none;
+  width:100%;
+  cursor:pointer
+}
+.td-select option{background:#1a2d4a}
+.td-num{
+  background:rgba(0,0,0,.2);
+  border:0.5px solid var(--border2);
+  border-radius:4px;
+  color:var(--amber);
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  padding:5px 8px;
+  outline:none;
+  width:80px;
+  text-align:right;
+  transition:border-color .15s
+}
+.td-num:focus{border-color:var(--amber)}
+
+/* factor tag pills */
+.ftag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:3px;white-space:nowrap;font-weight:500;cursor:pointer;transition:opacity .15s}
+.ftag:hover{opacity:.8}
+.ftag.dw    {background:rgba(232,122,122,.18);color:#f0a0a0;border:0.5px solid rgba(232,122,122,.3)}
+.ftag.attr  {background:rgba(61,127,212,.18);color:#7ab5f0;border:0.5px solid rgba(61,127,212,.3)}
+.ftag.disp  {background:rgba(167,139,250,.18);color:#c4b0fc;border:0.5px solid rgba(167,139,250,.3)}
+.ftag.drop  {background:rgba(46,196,166,.18);color:#60d8c4;border:0.5px solid rgba(46,196,166,.3)}
+.ftag.econ  {background:rgba(244,201,78,.12);color:#f4c94e;border:0.5px solid rgba(244,201,78,.3)}
+.ftag.soc   {background:rgba(74,222,128,.12);color:#4ade80;border:0.5px solid rgba(74,222,128,.3)}
+
+.risk-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.rl{background:var(--teal)}.rm{background:var(--amber)}.rh{background:var(--red)}
+
+.btn-del{background:var(--red-dim);border:0.5px solid rgba(232,122,122,.25);color:var(--red);border-radius:4px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;flex-shrink:0;transition:background .15s}
+.btn-del:hover{background:rgba(232,122,122,.25)}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--rs);font-family:inherit;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all .15s}
+.btn-ghost{background:transparent;border:0.5px solid var(--border2);color:var(--text2)}
+.btn-ghost:hover{background:var(--card);color:var(--text1)}
+.btn-add{background:var(--blue-glow);border:0.5px dashed rgba(61,127,212,.4);color:#7ab5f0;font-size:12px;padding:8px 14px;border-radius:var(--rs);cursor:pointer;width:100%;text-align:center;transition:background .15s;font-family:inherit;margin-top:10px}
+.btn-add:hover{background:rgba(61,127,212,.15)}
+
+/* ── RIGHT SIDEBAR ── */
+.sidebar{position:sticky;top:20px}
+
+/* ── FACTOR CARDS ── */
+.factor-card{background:var(--card);border:0.5px solid var(--border2);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;transition:border-color .2s}
+.factor-card.active{border-color:rgba(255,255,255,.22)}
+.fc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.fc-name{font-size:12px;font-weight:500;color:var(--text1)}
+.fc-badge{font-size:10px;padding:2px 7px;border-radius:3px;font-weight:500}
+.fc-val{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:500;margin-bottom:6px}
+.fc-desc{font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.5}
+.fc-source{font-size:10px;color:var(--text3);border-top:0.5px solid var(--border);padding-top:6px;line-height:1.4}
+.fc-source strong{color:var(--text2)}
+input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:3px;background:var(--border2);border-radius:2px;outline:none;cursor:pointer;margin-top:4px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--blue);border:2px solid #fff;cursor:pointer;transition:transform .12s}
+input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
+
+/* ── RESULT BOX ── */
+.result-box{background:rgba(61,127,212,.1);border:1px solid rgba(61,127,212,.28);border-radius:var(--r);padding:16px 18px;margin-bottom:10px}
+.rb-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.rb-row:last-child{margin-bottom:0}
+.rb-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+.rb-val{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:500}
+.rb-val.old{color:var(--red);text-decoration:line-through;font-size:14px}
+.rb-val.new{color:var(--teal)}
+.rb-val.thb{color:var(--text1);font-size:14px}
+.badge{display:inline-block;font-size:10px;padding:3px 9px;border-radius:4px}
+.b-ok  {background:var(--teal-dim);color:var(--teal);border:0.5px solid rgba(46,196,166,.3)}
+.b-warn{background:var(--amber-dim);color:var(--amber);border:0.5px solid rgba(244,201,78,.3)}
+.b-bad {background:var(--red-dim);color:var(--red);border:0.5px solid rgba(232,122,122,.3)}
+
+.formula-note{background:rgba(0,0,0,.2);border-radius:var(--rs);padding:10px 14px;font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:10px;line-height:1.7}
+.formula-note strong{color:var(--text2)}
+
+/* scenario row */
+.sc-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px}
+.sc-card{background:var(--card);border:0.5px solid var(--border);border-radius:var(--rs);padding:10px;text-align:center}
+.sc-name{font-size:10px;color:var(--text3);margin-bottom:4px}
+.sc-val{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:500}
+.sc-val.low{color:var(--red)}.sc-val.mid{color:var(--amber)}.sc-val.high{color:var(--teal)}
+.sc-sub{font-size:10px;color:var(--text3);margin-top:2px;line-height:1.4}
+
+/* ── IMPACT BARS ── */
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:11px;color:var(--text2)}
+.bl{min-width:80px}
+.bt{flex:1;height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+.bf{height:100%;border-radius:3px;transition:width .4s ease}
+.bn{min-width:70px;font-size:10px;color:var(--text3)}
+
+hr.d{border:none;border-top:0.5px solid var(--border);margin:12px 0}
+.sec-lbl{font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:8px;font-weight:500}
+
+/* ── HINT BOX ── */
+.hint{background:rgba(0,0,0,.18);border-left:2px solid var(--blue);border-radius:0 var(--rs) var(--rs) 0;padding:10px 14px;font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:12px}
+
+/* ── ACTIVITY BUILDER ── */
+.small-note{font-size:11px;color:var(--text3);margin-top:6px;line-height:1.5}
+.step-tag{display:inline-flex;align-items:center;gap:6px;font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.step-dot{width:8px;height:8px;border-radius:50%;background:rgba(61,127,212,.8);box-shadow:0 0 0 3px rgba(61,127,212,.12)}
+.kbd{font-family:'IBM Plex Mono',monospace;font-size:11px;background:rgba(0,0,0,.25);border:0.5px solid var(--border2);padding:2px 6px;border-radius:6px;color:var(--text2)}
+
+.td-num-wide{width:120px}
+.row-total{font-family:'IBM Plex Mono',monospace;color:var(--amber);text-align:right;white-space:nowrap}
+.btn-mini{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;font-size:11px;border:0.5px solid var(--border2);background:rgba(0,0,0,.14);color:var(--text2);cursor:pointer}
+.btn-mini:hover{background:rgba(255,255,255,.04);color:var(--text1)}
+
+/* quick factors */
+.qf-row{display:grid;grid-template-columns:1.3fr .7fr 110px;gap:10px;align-items:center;margin-bottom:10px}
+.qf-row:last-child{margin-bottom:0}
+.qf-lbl{font-size:12px;color:var(--text1);font-weight:500}
+.qf-desc{font-size:11px;color:var(--text3);margin-top:2px;line-height:1.4}
+.qf-box{background:rgba(0,0,0,.18);border:0.5px solid var(--border2);border-radius:var(--rs);padding:10px 12px}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hdr-tag">SROI Analysis · Editable Assumptions</div>
+  <h1>Attribution & Assumptions</h1>
+  <div class="hdr-sub">แก้ไขตาราง Assumptions ได้โดยตรง — ค่าจะอัปเดตกราฟและ SROI อัตโนมัติ</div>
+
+  <div class="hint">
+    <strong>วิธีใช้:</strong> กรอกข้อมูลจริงของโครงการคุณในตารางด้านล่าง → เลือก "ใช้ใน Factor" ว่าแต่ละ assumption เกี่ยวข้องกับตัวแปรไหน → ใส่ค่า % → ระบบจะเฉลี่ยค่าเข้าไปในการคำนวณ SROI ให้อัตโนมัติ คุณยังปรับ slider ได้ด้วยมือเพื่อ explore สถานการณ์ต่างๆ
+  </div>
+
+  <div class="layout">
+
+    <!-- LEFT: TABLE + INPUTS -->
+    <div>
+      <!-- PROJECT INPUTS -->
+      
+<div class="panel">
+  <div class="step-tag"><span class="step-dot"></span>Step 1 · สร้างมูลค่าผลลัพธ์ (Gross Value)</div>
+  <div class="panel-title">กิจกรรมที่ทำ → มูลค่าที่เกิดขึ้น <span>กรอกแบบภาษาคนทำงาน แล้วระบบรวมให้</span></div>
+  <div class="hint"><strong>เริ่มยังไง:</strong> เพิ่มกิจกรรม 1–3 รายการ → ใส่จำนวนและมูลค่าต่อหน่วย → ใส่ฐานคิด/ที่มาแบบสั้น ๆ (เช่น สถิติ, เอกสาร, หรือเหตุผลที่ใช้ประเมิน)</div>
+
+  <div class="tbl-wrap" style="min-width:unset">
+    <table id="act-table" style="min-width:760px">
+      <thead>
+        <tr>
+          <th style="width:26%">สิ่งที่โครงการทำ / ผลลัพธ์</th>
+          <th style="width:12%">จำนวน</th>
+          <th style="width:16%">หน่วย</th>
+          <th style="width:16%">มูลค่าต่อหน่วย (บาท)</th>
+          <th style="width:12%">รวม (บาท)</th>
+          <th style="width:18%">ฐานคิด / ที่มา</th>
+          <th style="width:4%"></th>
+        </tr>
+      </thead>
+      <tbody id="act-body"></tbody>
+    </table>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:10px;flex-wrap:wrap">
+    <button class="btn-mini" onclick="addActRow()">+ เพิ่มกิจกรรม</button>
+    <div style="display:flex;align-items:center;gap:10px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2)">
+        <input type="checkbox" id="autoGross" checked onchange="syncGrossFromActivities()"> ใช้ผลรวมจากกิจกรรม (แนะนำ)
+      </label>
+      <span class="kbd">Gross = Σ(จำนวน×มูลค่าต่อหน่วย)</span>
+    </div>
+  </div>
+
+  <hr class="d">
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:5px">มูลค่าผลลัพธ์รวม (Gross Value) — บาท</div>
+      <input class="td-input" type="number" id="gross" value="720000" oninput="recalc()" style="font-family:'IBM Plex Mono',monospace;color:var(--amber)" readonly>
+      <div class="small-note">*ถ้าปิด “ใช้ผลรวมจากกิจกรรม” จะสามารถแก้ Gross เองได้</div>
+    </div>
+    <div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:5px">งบประมาณ (Investment) — บาท</div>
+      <input class="td-input" type="number" id="invest" value="100000" oninput="recalc()" style="font-family:'IBM Plex Mono',monospace;color:var(--teal)">
+      <div class="small-note">รวมค่าใช้จ่ายทั้งหมดของโครงการในรอบที่ประเมิน (เช่น 1 ปี)</div>
+    </div>
+  </div>
+</div>
+
+      </div>
+
+      <!-- ASSUMPTION TABLE -->
+      
+<div class="panel">
+  <div class="step-tag"><span class="step-dot" style="background:rgba(244,201,78,.95);box-shadow:0 0 0 3px rgba(244,201,78,.14)"></span>Step 2 · ปรับ 4 ปัจจัยหลัก</div>
+  <div class="panel-title">ปรับเป็น % เพื่อเห็นภาพเร็ว <span>ใส่แค่ 4 ค่า ก็พอ</span></div>
+
+  <div class="qf-box">
+    <div class="qf-row">
+      <div>
+        <div class="qf-lbl">Deadweight</div>
+        <div class="qf-desc">ถ้าไม่มีโครงการ ผลจะเกิดเองกี่ %</div>
+      </div>
+      <input class="td-num" type="number" min="0" max="60" id="qf-dw" value="20" oninput="setQuickFactor('dw', this.value)">
+      <input type="range" min="0" max="60" value="20" oninput="setQuickFactor('dw', this.value)" style="accent-color:var(--red)">
+    </div>
+
+    <div class="qf-row">
+      <div>
+        <div class="qf-lbl">Attribution</div>
+        <div class="qf-desc">ผลที่เกิดเป็นเพราะโครงการเราจริง ๆ กี่ %</div>
+      </div>
+      <input class="td-num" type="number" min="10" max="100" id="qf-attr" value="70" oninput="setQuickFactor('attr', this.value)">
+      <input type="range" min="10" max="100" value="70" oninput="setQuickFactor('attr', this.value)" style="accent-color:var(--blue)">
+    </div>
+
+    <div class="qf-row">
+      <div>
+        <div class="qf-lbl">Displacement</div>
+        <div class="qf-desc">โครงการกระทบคนอื่น/ตลาดจนเกิดผลลบกี่ %</div>
+      </div>
+      <input class="td-num" type="number" min="0" max="50" id="qf-disp" value="10" oninput="setQuickFactor('disp', this.value)">
+      <input type="range" min="0" max="50" value="10" oninput="setQuickFactor('disp', this.value)" style="accent-color:var(--purple)">
+    </div>
+
+    <div class="qf-row">
+      <div>
+        <div class="qf-lbl">Drop-off</div>
+        <div class="qf-desc">ปีถัดไปผลลัพธ์ลดลงกี่ % (โดยเฉลี่ยต่อปี)</div>
+      </div>
+      <input class="td-num" type="number" min="0" max="50" id="qf-drop" value="15" oninput="setQuickFactor('drop', this.value)">
+      <input type="range" min="0" max="50" value="15" oninput="setQuickFactor('drop', this.value)" style="accent-color:var(--teal)">
+    </div>
+  </div>
+
+  <div class="small-note">เคล็ดลับ: ลองปรับทีละตัว (เช่น Attribution +10 หรือ Deadweight +10) แล้วสังเกตว่า SROI เปลี่ยนอย่างไร</div>
+</div>
+
+
+      <!-- LEGEND -->
+      <div class="panel" style="padding:14px 18px">
+        <div class="panel-title">คำอธิบาย Factor <span>ค่า % ถูกเฉลี่ยจาก assumptions ที่ tag ไว้</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;color:var(--text2)">
+          <div style="display:flex;align-items:center;gap:6px"><span class="ftag dw">Deadweight</span>สิ่งที่เกิดเองโดยไม่มีโครงการ</div>
+          <div style="display:flex;align-items:center;gap:6px"><span class="ftag attr">Attribution</span>สัดส่วนที่เกิดจากโครงการโดยตรง</div>
+          <div style="display:flex;align-items:center;gap:6px"><span class="ftag disp">Displacement</span>ผลกระทบต่อผู้อื่นในตลาด</div>
+          <div style="display:flex;align-items:center;gap:6px"><span class="ftag drop">Drop-off</span>การลดลงของผลลัพธ์ตามเวลา</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: SIDEBAR CALCULATOR -->
+    <div class="sidebar">
+
+      <!-- FACTOR CARDS -->
+      <div class="factor-card active">
+        <div class="fc-top">
+          <div class="fc-name">Deadweight</div>
+          <span class="ftag dw fc-badge" id="dw-src-count">— ค่า</span>
+        </div>
+        <div class="fc-val" id="dw-val" style="color:var(--red)">20%</div>
+        <div class="fc-desc" id="dw-desc">สิ่งที่เกิดขึ้นเองโดยไม่มีโครงการ</div>
+        <input type="range" id="dw-slider" min="0" max="60" value="20" oninput="onSlider('dw',this.value)" style="accent-color:var(--red)">
+        <div class="fc-source" id="dw-src-note">ปรับ slider หรือกรอกข้อมูลในตารางเพื่อคำนวณอัตโนมัติ</div>
+      </div>
+
+      <div class="factor-card active">
+        <div class="fc-top">
+          <div class="fc-name">Attribution</div>
+          <span class="ftag attr fc-badge" id="attr-src-count">— ค่า</span>
+        </div>
+        <div class="fc-val" id="attr-val" style="color:var(--blue)">70%</div>
+        <div class="fc-desc" id="attr-desc">สัดส่วนที่เกิดจากโครงการโดยตรง</div>
+        <input type="range" id="attr-slider" min="10" max="100" value="70" oninput="onSlider('attr',this.value)" style="accent-color:var(--blue)">
+        <div class="fc-source" id="attr-src-note">ปรับ slider หรือกรอกข้อมูลในตารางเพื่อคำนวณอัตโนมัติ</div>
+      </div>
+
+      <div class="factor-card active">
+        <div class="fc-top">
+          <div class="fc-name">Displacement</div>
+          <span class="ftag disp fc-badge" id="disp-src-count">— ค่า</span>
+        </div>
+        <div class="fc-val" id="disp-val" style="color:var(--purple)">10%</div>
+        <div class="fc-desc" id="disp-desc">ผลกระทบต่อผู้อื่นในตลาด</div>
+        <input type="range" id="disp-slider" min="0" max="50" value="10" oninput="onSlider('disp',this.value)" style="accent-color:var(--purple)">
+        <div class="fc-source" id="disp-src-note">ปรับ slider หรือกรอกข้อมูลในตารางเพื่อคำนวณอัตโนมัติ</div>
+      </div>
+
+      <div class="factor-card active">
+        <div class="fc-top">
+          <div class="fc-name">Drop-off</div>
+          <span class="ftag drop fc-badge" id="drop-src-count">— ค่า</span>
+        </div>
+        <div class="fc-val" id="drop-val" style="color:var(--teal)">15%</div>
+        <div class="fc-desc" id="drop-desc">การลดลงของผลลัพธ์ตามเวลา</div>
+        <input type="range" id="drop-slider" min="0" max="50" value="15" oninput="onSlider('drop',this.value)" style="accent-color:var(--teal)">
+        <div class="fc-source" id="drop-src-note">ปรับ slider หรือกรอกข้อมูลในตารางเพื่อคำนวณอัตโนมัติ</div>
+      </div>
+
+      <hr class="d">
+
+      <!-- FORMULA -->
+      <div class="formula-note" id="formula-note">—</div>
+
+      <!-- RESULT -->
+      <div class="result-box">
+        <div class="rb-row"><span class="rb-label">SROI เดิม (ก่อนปรับ)</span><span class="rb-val old" id="r-raw">—</span></div>
+        <div class="rb-row"><span class="rb-label">SROI หลังปรับ</span><div style="display:flex;align-items:center;gap:8px"><span class="rb-val new" id="r-adj">—</span><span class="badge b-ok" id="r-badge">—</span></div></div>
+        <div class="rb-row"><span class="rb-label">มูลค่าสังคมสุทธิ</span><span class="rb-val thb" id="r-thb">—</span></div>
+        <div class="rb-row"><span class="rb-label">กำไรสุทธิ</span><span class="rb-val thb" id="r-gain">—</span></div>
+      </div>
+
+      <!-- SENSITIVITY -->
+      <div class="sec-lbl">Sensitivity Analysis</div>
+      <div class="sc-row">
+        <div class="sc-card"><div class="sc-name">Conservative</div><div class="sc-val low" id="sc-lo">—</div><div class="sc-sub" id="sc-lo-s">—</div></div>
+        <div class="sc-card" style="border-color:rgba(61,127,212,.35);background:rgba(61,127,212,.07)"><div class="sc-name">Base Case</div><div class="sc-val mid" id="sc-md">—</div><div class="sc-sub" id="sc-md-s">—</div></div>
+        <div class="sc-card"><div class="sc-name">Optimistic</div><div class="sc-val high" id="sc-hi">—</div><div class="sc-sub" id="sc-hi-s">—</div></div>
+      </div>
+
+      <!-- IMPACT BARS -->
+      <div class="sec-lbl">ปัจจัยที่มีผลมากที่สุด</div>
+      <div class="bar-row"><span class="bl">Deadweight</span><div class="bt"><div class="bf" id="bar-dw" style="background:var(--red)"></div></div><span class="bn" id="bn-dw">—</span></div>
+      <div class="bar-row"><span class="bl">Attribution</span><div class="bt"><div class="bf" id="bar-attr" style="background:var(--blue)"></div></div><span class="bn" id="bn-attr">—</span></div>
+      <div class="bar-row"><span class="bl">Displacement</span><div class="bt"><div class="bf" id="bar-disp" style="background:var(--purple)"></div></div><span class="bn" id="bn-disp">—</span></div>
+      <div class="bar-row"><span class="bl">Drop-off</span><div class="bt"><div class="bf" id="bar-drop" style="background:var(--teal)"></div></div><span class="bn" id="bn-drop">—</span></div>
+
+    </div><!-- /sidebar -->
+  </div><!-- /layout -->
+</div>
+
+<script>
+// ── DEFAULT ASSUMPTION DATA ──
+const defaults = [
+  {name:'รายได้เฉลี่ยผู้ประกอบอาชีพนวดไทย', type:'econ', pct:'', factor:'none', risk:'low', source:'กรมการจัดหางาน 2567'},
+  {name:'% ผู้ผ่านอบรมที่ประกอบอาชีพจริง (80%)', type:'econ', pct:'', factor:'none', risk:'mid', source:'สมมติฐาน Conservative'},
+  {name:'อัตราการมีงานทำเองในพื้นที่โดยไม่มีโครงการ', type:'attr', pct:'20', factor:'dw', risk:'mid', source:'NSO ข้อมูลตลาดแรงงาน'},
+  {name:'สัดส่วนที่เกิดจากโครงการโดยตรง (Attribution)', type:'attr', pct:'70', factor:'attr', risk:'high', source:'สัมภาษณ์ผู้เข้าร่วม + ผู้เชี่ยวชาญ'},
+  {name:'ผลกระทบต่อผู้ประกอบการนวดเดิมในพื้นที่', type:'attr', pct:'10', factor:'disp', risk:'mid', source:'กรมพัฒนาธุรกิจการค้า'},
+  {name:'อัตราการลดลงของผลลัพธ์ต่อปี (Drop-off)', type:'attr', pct:'15', factor:'drop', risk:'mid', source:'SROI Network Benchmark 2023'},
+  {name:'อัตราการว่างงานในพื้นที่ก่อนโครงการ (Counterfactual)', type:'soc', pct:'', factor:'none', risk:'low', source:'สำนักงานสถิติแห่งชาติ Q1/2567'},
+  {name:'ระยะเวลาที่ใช้คำนวณผลลัพธ์ (1 ปี)', type:'econ', pct:'', factor:'none', risk:'low', source:'กำหนดโดยผู้วิจัย'},
+];
+
+// ── STATE ──
+let factors = {dw:20, attr:70, disp:10, drop:15};
+let sliderOverride = {dw:false, attr:false, disp:false, drop:false};
+
+// ── ACTIVITY BUILDER STATE ──
+const actDefaults = [
+  {what:'ฝึกอาชีพ/อบรม', qty:30, unit:'คน', unitVal:24000, basis:'รายได้เฉลี่ย/ปี (ตัวอย่าง)'}
+];
+
+function addActRow(d={}){
+  const tbody = document.getElementById('act-body');
+  if(!tbody) return;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input class="td-input" value="${d.what||''}" placeholder="เช่น อบรมอาชีพ / ลดค่าใช้จ่าย" oninput="syncGrossFromActivities()"></td>
+    <td><input class="td-num td-num-wide" type="number" min="0" value="${(d.qty??'')}" placeholder="0" oninput="syncGrossFromActivities()"></td>
+    <td><input class="td-input" value="${d.unit||''}" placeholder="เช่น คน / ครั้ง / ครัวเรือน" oninput="syncGrossFromActivities()"></td>
+    <td><input class="td-num td-num-wide" type="number" min="0" value="${(d.unitVal??'')}" placeholder="0" oninput="syncGrossFromActivities()"></td>
+    <td class="row-total">—</td>
+    <td><input class="td-input" value="${d.basis||''}" placeholder="ที่มา/ฐานคิดแบบสั้น" oninput="syncGrossFromActivities()"></td>
+    <td><button class="btn-del" onclick="delActRow(this)" title="ลบ">×</button></td>
+  `;
+  tbody.appendChild(tr);
+  syncGrossFromActivities();
+}
+
+function delActRow(btn){
+  const rows = document.querySelectorAll('#act-body tr');
+  if(rows.length <= 1) return;
+  btn.closest('tr').remove();
+  syncGrossFromActivities();
+}
+
+function syncGrossFromActivities(){
+  const auto = document.getElementById('autoGross');
+  const grossEl = document.getElementById('gross');
+  if(!grossEl) return;
+
+  const useAuto = !!auto?.checked;
+  grossEl.readOnly = useAuto;
+
+  let sum = 0;
+  document.querySelectorAll('#act-body tr').forEach(tr=>{
+    const qty = parseFloat(tr.children[1].querySelector('input')?.value || '0');
+    const unitVal = parseFloat(tr.children[3].querySelector('input')?.value || '0');
+    const total = (isNaN(qty)?0:qty) * (isNaN(unitVal)?0:unitVal);
+    sum += total;
+    tr.querySelector('.row-total').textContent = total ? Math.round(total).toLocaleString('th-TH') : '—';
+  });
+
+  if(useAuto){ grossEl.value = Math.round(sum); }
+  recalc();
+}
+
+// ── QUICK FACTORS (STEP 2) ──
+function clamp(n, lo, hi){ n = parseFloat(n); if(isNaN(n)) return lo; return Math.max(lo, Math.min(hi, n)); }
+function setQuickFactor(f, val){
+  if(f==='dw') val = clamp(val, 0, 60);
+  if(f==='attr') val = clamp(val, 10, 100);
+  if(f==='disp') val = clamp(val, 0, 50);
+  if(f==='drop') val = clamp(val, 0, 50);
+  factors[f] = Math.round(val);
+  sliderOverride[f] = true;
+
+  const s = document.getElementById(f+'-slider');
+  if(s) s.value = factors[f];
+
+  const qn = document.getElementById('qf-'+f);
+  if(qn) qn.value = factors[f];
+  const ranges = document.querySelectorAll('.qf-box input[type=range]');
+  const idx = ({dw:0,attr:1,disp:2,drop:3})[f];
+  if(ranges && ranges[idx]) ranges[idx].value = factors[f];
+
+  updateDisplays();
+  recalc();
+}
+
+
+// ── INIT ──
+window.onload = () => {
+  actDefaults.forEach(d => addActRow(d));
+ // (ตัด Step 3 ออก) ไม่โหลด Assumption Table
+
+  recalc();
+};
+
+// ── ADD ROW ──
+function addRow(d={}) {
+  const tbody = document.getElementById('tbl-body');
+  const tr = document.createElement('tr');
+  const id = Date.now() + Math.random();
+  tr.dataset.id = id;
+
+  const typeOpts = ['econ','soc','attr','none'].map(v =>
+    `<option value="${v}" ${d.type===v?'selected':''}>${{econ:'เศรษฐกิจ',soc:'สังคม',attr:'Attribution',none:'—'}[v]}</option>`).join('');
+  const factorOpts = ['none','dw','attr','disp','drop'].map(v =>
+    `<option value="${v}" ${(d.factor||'none')===v?'selected':''}>${{none:'—',dw:'Deadweight',attr:'Attribution',disp:'Displacement',drop:'Drop-off'}[v]}</option>`).join('');
+  const riskOpts = ['low','mid','high'].map(v =>
+    `<option value="${v}" ${(d.risk||'low')===v?'selected':''}>${{low:'ต่ำ',mid:'กลาง',high:'สูง'}[v]}</option>`).join('');
+
+  tr.innerHTML = `
+    <td><input class="td-input" value="${d.name||''}" placeholder="ชื่อสมมติฐาน..." oninput="syncFromTable()"></td>
+    <td><select class="td-select" onchange="syncFromTable()">${typeOpts}</select></td>
+    <td><input class="td-num" type="number" min="0" max="100" value="${d.pct||''}" placeholder="—" oninput="syncFromTable()"></td>
+    <td><select class="td-select factor-sel" onchange="syncFromTable()">${factorOpts}</select></td>
+    <td>
+      <div style="display:flex;align-items:center;gap:4px">
+        <select class="td-select risk-sel" onchange="syncFromTable()">${riskOpts}</select>
+      </div>
+    </td>
+    <td><input class="td-input" value="${d.source||''}" placeholder="แหล่งข้อมูล..." oninput="syncFromTable()"></td>
+    <td><button class="btn-del" onclick="delRow(this)" title="ลบ">×</button></td>`;
+  tbody.appendChild(tr);
+}
+
+function delRow(btn) {
+  const rows = document.querySelectorAll('#tbl-body tr');
+  if (rows.length <= 1) return;
+  btn.closest('tr').remove();
+  syncFromTable();
+}
+
+// ── SYNC TABLE → FACTORS ──
+function syncFromTable() {
+  const buckets = {dw:[], attr:[], disp:[], drop:[]};
+  const notes   = {dw:[], attr:[], disp:[], drop:[]};
+
+  document.querySelectorAll('#tbl-body tr').forEach(tr => {
+    const factor = tr.querySelector('.factor-sel')?.value;
+    const pctRaw = tr.querySelector('.td-num')?.value;
+    const name   = tr.querySelector('td:first-child input')?.value || '';
+    const risk   = tr.querySelector('.risk-sel')?.value || 'mid';
+    const pct    = parseFloat(pctRaw);
+    if (factor && factor !== 'none' && !isNaN(pct) && pctRaw !== '') {
+      buckets[factor].push(pct);
+      notes[factor].push(`${name||'—'} (${pct}%, ${{low:'เสี่ยงต่ำ',mid:'กลาง',high:'สูง'}[risk]})`);
+    }
+  });
+
+  ['dw','attr','disp','drop'].forEach(f => {
+    if (buckets[f].length > 0 && !sliderOverride[f]) {
+      const avg = buckets[f].reduce((a,b)=>a+b,0) / buckets[f].length;
+      factors[f] = Math.round(avg);
+      document.getElementById(f+'-slider').value = factors[f];
+    }
+    const cnt = buckets[f].length;
+    const fLabel = {dw:'Deadweight',attr:'Attribution',disp:'Displacement',drop:'Drop-off'}[f];
+    document.getElementById(f+'-src-count').textContent = cnt > 0 ? `${cnt} ค่า (เฉลี่ย)` : '— (manual)';
+    document.getElementById(f+'-src-note').innerHTML = cnt > 0
+      ? notes[f].map(n=>`· ${n}`).join('<br>')
+      : 'ยังไม่มี assumption — ใช้ค่า slider';
+  });
+
+  updateDisplays();
+  recalc();
+}
+
+function onSlider(f, val) {
+  sliderOverride[f] = true;
+  factors[f] = parseInt(val);
+  updateDisplays();
+  recalc();
+  // Reset override flag after 3s of no table edit
+  clearTimeout(window['ot_'+f]);
+  window['ot_'+f] = setTimeout(() => { sliderOverride[f] = false; }, 3000);
+}
+
+function updateDisplays() {
+  document.getElementById('dw-val').textContent   = factors.dw   + '%';
+  document.getElementById('attr-val').textContent  = factors.attr + '%';
+  document.getElementById('disp-val').textContent  = factors.disp + '%';
+  document.getElementById('drop-val').textContent  = factors.drop + '%';
+  document.getElementById('dw-slider').value   = factors.dw;
+  document.getElementById('attr-slider').value  = factors.attr;
+  document.getElementById('disp-slider').value  = factors.disp;
+  document.getElementById('drop-slider').value  = factors.drop;
+}
+
+function recalc() {
+  const gross  = parseFloat(document.getElementById('gross').value)  || 0;
+  const invest = parseFloat(document.getElementById('invest').value) || 1;
+  const {dw, attr, disp, drop} = factors;
+
+  const rawSROI = gross / invest;
+  const adjVal  = gross * (1-dw/100) * (attr/100) * (1-disp/100) * (1-drop/100);
+  const adjSROI = adjVal / invest;
+  const gain    = adjVal - invest;
+
+  // Formula
+  document.getElementById('formula-note').innerHTML =
+    `<strong>สูตร:</strong> ${gross.toLocaleString('th-TH')} × (1−${dw}%) × ${attr}% × (1−${disp}%) × (1−${drop}%) ÷ ${invest.toLocaleString('th-TH')}<br>= ${adjSROI.toFixed(2)} : 1`;
+
+  document.getElementById('r-raw').textContent  = rawSROI.toFixed(1) + ' : 1';
+  document.getElementById('r-adj').textContent  = adjSROI.toFixed(1) + ' : 1';
+  document.getElementById('r-thb').textContent  = Math.round(adjVal).toLocaleString('th-TH') + ' ฿';
+  document.getElementById('r-gain').textContent = (gain >= 0 ? '+' : '') + Math.round(gain).toLocaleString('th-TH') + ' ฿';
+
+  const badge = document.getElementById('r-badge');
+  if (adjSROI >= 3)      { badge.textContent='ยอมรับได้'; badge.className='badge b-ok'; }
+  else if (adjSROI >= 1) { badge.textContent='พอรับได้';  badge.className='badge b-warn'; }
+  else                   { badge.textContent='ต่ำกว่าเกณฑ์'; badge.className='badge b-bad'; }
+
+  // Sensitivity
+  const calc = (d,a,dp,dr) => (gross*(1-d/100)*(a/100)*(1-dp/100)*(1-dr/100)/invest).toFixed(1);
+  const lo = calc(Math.min(60,dw+15), Math.max(10,attr-15), Math.min(50,disp+10), Math.min(50,drop+10));
+  const md = calc(dw, attr, disp, drop);
+  const hi = calc(Math.max(0,dw-10), Math.min(100,attr+10), Math.max(0,disp-5), Math.max(0,drop-7));
+  document.getElementById('sc-lo').textContent = lo+' : 1';
+  document.getElementById('sc-md').textContent = md+' : 1';
+  document.getElementById('sc-hi').textContent = hi+' : 1';
+  document.getElementById('sc-lo-s').textContent = `DW ${Math.min(60,dw+15)}%, Attr ${Math.max(10,attr-15)}%`;
+  document.getElementById('sc-md-s').textContent = `DW ${dw}%, Attr ${attr}%`;
+  document.getElementById('sc-hi-s').textContent = `DW ${Math.max(0,dw-10)}%, Attr ${Math.min(100,attr+10)}%`;
+
+  // Impact bars
+  const impacts = { dw: dw, attr: 100-attr, disp: disp, drop: drop };
+  const maxImp = Math.max(...Object.values(impacts), 1);
+  const lvl = v => v >= 30 ? 'สูงมาก' : v >= 15 ? 'สูง' : v >= 5 ? 'ปานกลาง' : 'ต่ำ';
+  ['dw','attr','disp','drop'].forEach(f => {
+    const v = impacts[f];
+    document.getElementById('bar-'+f).style.width = Math.round(v/maxImp*95)+'%';
+    document.getElementById('bn-'+f).textContent  = lvl(v);
+  });
+}
+</script>
+</body>
+</html>
