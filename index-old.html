@@ -193,12 +193,7 @@ hr.d{border:none;border-top:0.5px solid var(--border);margin:12px 0}
   <div class="hdr-sub">แก้ไขตาราง Assumptions ได้โดยตรง — ค่าจะอัปเดตกราฟและ SROI อัตโนมัติ</div>
 
   <div class="hint">
-    <strong>วิธีใช้:</strong> ① กรอก Outcomes ในตาราง Step 1 (ผลลัพธ์ที่เกิดกับผู้รับประโยชน์ ไม่ใช่กิจกรรม) → ระบบคำนวณ Gross Value อัตโนมัติตามช่วงเวลา → ② ปรับ 4 factors ใน Step 2
-  </div>
-  <div class="hint" style="border-left-color:var(--amber);margin-bottom:20px">
-    <strong>⚠️ Attribution ≠ Deadweight:</strong>
-    <strong>Deadweight</strong> = ผลลัพธ์ที่จะเกิดขึ้นเองแม้ไม่มีโครงการ (เช่น 20% ของผู้เรียนหางานได้เองอยู่แล้ว) |
-    <strong>Attribution</strong> = สัดส่วนที่โครงการ<em>นี้</em>รับผิดชอบ เทียบกับปัจจัยอื่น เช่น นโยบายรัฐ ครอบครัว — ต้องประเมินทั้งคู่แยกกัน
+    <strong>วิธีใช้:</strong> กรอกข้อมูลจริงของโครงการคุณในตารางด้านล่าง → เลือก "ใช้ใน Factor" ว่าแต่ละ assumption เกี่ยวข้องกับตัวแปรไหน → ใส่ค่า % → ระบบจะเฉลี่ยค่าเข้าไปในการคำนวณ SROI ให้อัตโนมัติ คุณยังปรับ slider ได้ด้วยมือเพื่อ explore สถานการณ์ต่างๆ
   </div>
 
   <div class="layout">
@@ -216,14 +211,13 @@ hr.d{border:none;border-top:0.5px solid var(--border);margin:12px 0}
     <table id="act-table" style="min-width:760px">
       <thead>
         <tr>
-          <th style="width:24%;color:#fbbf24">Outcome (ผลลัพธ์ที่เกิดกับผู้รับประโยชน์)</th>
-          <th style="width:8%">จำนวน</th>
-          <th style="width:10%">หน่วย</th>
-          <th style="width:11%">ช่วงเวลา</th>
-          <th style="width:7%">จำนวนปี</th>
-          <th style="width:12%">มูลค่า/หน่วย (บาท)</th>
-          <th style="width:11%">รวม (บาท)</th>
-          <th style="width:13%">ฐานคิด / ที่มา</th>
+          <th style="width:26%">Outcome (การเปลี่ยนแปลงที่เกิดขึ้น)</th>
+          <th style="width:12%">จำนวน</th>
+          <th style="width:16%">หน่วย</th>
+          <th style="width:12%">ช่วงเวลา</th>
+          <th style="width:16%">มูลค่าต่อหน่วย (บาท)</th>
+          <th style="width:12%">รวม (บาท)</th>
+          <th style="width:18%">ฐานคิด / ที่มา</th>
           <th style="width:4%"></th>
         </tr>
       </thead>
@@ -417,24 +411,17 @@ let sliderOverride = {dw:false, attr:false, disp:false, drop:false};
 
 // ── ACTIVITY BUILDER STATE ──
 const actDefaults = [
-  {what:'รายได้เพิ่มขึ้นของผู้ผ่านอบรม', qty:16, unit:'คน', period:'month', years:1, unitVal:3000, basis:'อัตราค่าจ้าง กรมการจัดหางาน 2567'}
+  {what:'ฝึกอาชีพ/อบรม', qty:30, unit:'คน', unitVal:24000, basis:'รายได้เฉลี่ย/ปี (ตัวอย่าง)'}
 ];
 
 function addActRow(d={}){
   const tbody = document.getElementById('act-body');
   if(!tbody) return;
   const tr = document.createElement('tr');
-
-  // [แก้ที่ 2] period options
-  const periodOpts = ['month','year','once'].map(v =>
-    `<option value="${v}" ${(d.period||'month')===v?'selected':''}>${{month:'× 12 เดือน',year:'× ปี',once:'ครั้งเดียว'}[v]}</option>`).join('');
-
   tr.innerHTML = `
-    <td><input class="td-input act-desc" value="${d.what||''}" placeholder="ผลลัพธ์ที่เกิดกับผู้รับประโยชน์ เช่น รายได้เพิ่ม" oninput="syncGrossFromActivities()"></td>
+    <td><input class="td-input" value="${d.what||''}" placeholder="เช่น รายได้เพิ่ม / ลดค่าใช้จ่าย / ลดค่าใช้จ่าย" oninput="syncGrossFromActivities()"></td>
     <td><input class="td-num td-num-wide" type="number" min="0" value="${(d.qty??'')}" placeholder="0" oninput="syncGrossFromActivities()"></td>
-    <td><input class="td-input" value="${d.unit||''}" placeholder="คน / ครัวเรือน" oninput="syncGrossFromActivities()"></td>
-    <td><select class="td-select period-sel" onchange="syncGrossFromActivities()">${periodOpts}</select></td>
-    <td><input class="td-num" type="number" min="1" max="20" value="${d.years||1}" placeholder="1" oninput="syncGrossFromActivities()" style="width:100%;color:var(--purple)"></td>
+    <td><input class="td-input" value="${d.unit||''}" placeholder="เช่น คน / ครั้ง / ครัวเรือน" oninput="syncGrossFromActivities()"></td>
     <td><input class="td-num td-num-wide" type="number" min="0" value="${(d.unitVal??'')}" placeholder="0" oninput="syncGrossFromActivities()"></td>
     <td class="row-total">—</td>
     <td><input class="td-input" value="${d.basis||''}" placeholder="ที่มา/ฐานคิดแบบสั้น" oninput="syncGrossFromActivities()"></td>
@@ -460,47 +447,13 @@ function syncGrossFromActivities(){
   grossEl.readOnly = useAuto;
 
   let sum = 0;
-  const warnings = [];
-
   document.querySelectorAll('#act-body tr').forEach(tr=>{
-    // [แก้ที่ 4] index เปลี่ยนเพราะมี period และ years เพิ่มเข้ามา
-    const desc    = tr.querySelector('.act-desc')?.value || '';
-    const qty     = parseFloat(tr.children[1].querySelector('input')?.value || '0');
-    const period  = tr.querySelector('.period-sel')?.value || 'month';
-    const years   = parseFloat(tr.children[4].querySelector('input')?.value || '1');
-    const unitVal = parseFloat(tr.children[5].querySelector('input')?.value || '0');
-
-    // [แก้ที่ 3] period multiplier
-    let multiplier = 1;
-    if (period === 'month')  multiplier = 12 * years;
-    else if (period === 'year')  multiplier = years;
-    else if (period === 'once') multiplier = 1;
-
-    const total = (isNaN(qty)?0:qty) * (isNaN(unitVal)?0:unitVal) * multiplier;
+    const qty = parseFloat(tr.children[1].querySelector('input')?.value || '0');
+    const unitVal = parseFloat(tr.children[3].querySelector('input')?.value || '0');
+    const total = (isNaN(qty)?0:qty) * (isNaN(unitVal)?0:unitVal);
     sum += total;
     tr.querySelector('.row-total').textContent = total ? Math.round(total).toLocaleString('th-TH') : '—';
-
-    // [แก้ที่ 6] เตือนถ้าชื่อดูเป็น activity ไม่ใช่ outcome
-    const activityKeywords = ['อบรม','ฝึก','จัด','สอน','ประชุม','workshop','seminar','training'];
-    if (activityKeywords.some(k => desc.toLowerCase().includes(k)) && desc.length > 2) {
-      warnings.push(`"${desc}" — ดูเหมือนกิจกรรม ควรเป็นผลลัพธ์ เช่น "รายได้เพิ่ม" หรือ "ทักษะที่ได้รับ"`);
-    }
   });
-
-  // แสดง / ซ่อน warning
-  let warnEl = document.getElementById('act-warn');
-  if (!warnEl) {
-    warnEl = document.createElement('div');
-    warnEl.id = 'act-warn';
-    warnEl.style.cssText = 'background:rgba(251,146,60,.08);border:0.5px solid rgba(251,146,60,.3);border-radius:6px;padding:8px 12px;font-size:11px;color:#fb923c;margin-top:8px;line-height:1.5;display:none';
-    document.getElementById('act-body').closest('.panel').appendChild(warnEl);
-  }
-  if (warnings.length > 0) {
-    warnEl.innerHTML = '⚠️ ' + warnings.join('<br>⚠️ ');
-    warnEl.style.display = 'block';
-  } else {
-    warnEl.style.display = 'none';
-  }
 
   if(useAuto){ grossEl.value = Math.round(sum); }
   recalc();
@@ -643,20 +596,6 @@ function recalc() {
   // Formula
   document.getElementById('formula-note').innerHTML =
     `<strong>สูตร:</strong> ${gross.toLocaleString('th-TH')} × (1−${dw}%) × ${attr}% × (1−${disp}%) × (1−${drop}%) ÷ ${invest.toLocaleString('th-TH')}<br>= ${adjSROI.toFixed(2)} : 1`;
-
-  // [แก้ที่ 5] Sanity check validations
-  let valWarn = document.getElementById('sroi-val-warn');
-  if (!valWarn) {
-    valWarn = document.createElement('div');
-    valWarn.id = 'sroi-val-warn';
-    valWarn.style.cssText = 'background:rgba(251,146,60,.08);border:0.5px solid rgba(251,146,60,.3);border-radius:6px;padding:8px 12px;font-size:11px;color:#fb923c;margin-bottom:10px;line-height:1.5;display:none';
-    document.getElementById('formula-note').after(valWarn);
-  }
-  const vw = [];
-  if (gross === 0)      vw.push('⚠️ ยังไม่มี Outcome ที่คำนวณได้ — กรุณากรอกตาราง Step 1');
-  if (adjSROI > 20 && gross > 0) vw.push(`⚠️ SROI = ${adjSROI.toFixed(1)} สูงผิดปกติ — ตรวจสอบมูลค่า Outcome และ % factors อีกครั้ง`);
-  valWarn.innerHTML = vw.join('<br>');
-  valWarn.style.display = vw.length ? 'block' : 'none';
 
   document.getElementById('r-raw').textContent  = rawSROI.toFixed(1) + ' : 1';
   document.getElementById('r-adj').textContent  = adjSROI.toFixed(1) + ' : 1';
