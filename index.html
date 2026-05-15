@@ -69,6 +69,17 @@ th{background:rgba(0,0,0,0.3);}
   border-left:3px solid #3d7fd4;
   font-size:12px;
   color:#8aaacf;
+
+  .footer{
+    margin-top:20px;
+    text-align:center;
+  }
+
+  .footer-text{
+    font-size:12px;
+    color:#8aaacf;
+    line-height:1.6;
+  }
 }
 
 button{
@@ -90,6 +101,12 @@ button{
  table,th,td{border:1px solid black;}
  .result{border:2px solid black;}
  @page{size:A4;margin:20mm;}
+
+  .footer-text{
+    color:black !important;
+    font-size:11px;
+  }
+
 }
 </style>
 </head>
@@ -202,6 +219,19 @@ Net Benefit: <span id="net">0</span> บาท
 </div>
 
 <button onclick="window.print()">🖨️ Export PDF</button>
+
+<!-- FOOTER -->
+<div class="footer">
+
+<hr style="margin-top:20px;">
+
+<div class="footer-text">
+© 2026 SROI DSS Framework<br>
+Developed by: Kitti Chiewchan<br>
+For academic and research use only
+</div>
+
+</div>
 
 </div>
 
