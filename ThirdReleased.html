@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SROI DSS v4.2 (Summary 1/3/5y Tabs)</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root{
+      --bg:#0f1c2e;
+      --card:#1a2d4a;
+      --muted:#8aaacf;
+      --accent:#3d7fd4;
+      --good:#2ec4a6;
+      --warn:#f4c94e;
+      --danger:#e53e3e;
+      --border:rgba(255,255,255,.15);
+      --soft:rgba(255,255,255,.06);
+    }
+    *{box-sizing:border-box}
+    body{font-family:"Sarabun",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:#fff;padding:28px;}
+    .container{max-width:1200px;margin:auto;}
+    .header,.card,.result{background:var(--card);padding:16px;border-radius:14px;margin-bottom:14px;box-shadow:0 10px 24px rgba(0,0,0,.18);}
+    .result{border:2px solid var(--accent);background:rgba(255,255,255,.02)}
+    h2,h3{margin:0 0 10px 0}
+
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+    .grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;}
+
+    label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px;}
+    input,select{width:100%;padding:9px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.22);color:#fff;outline:none;}
+    input:focus,select:focus{border-color:rgba(61,127,212,.9);box-shadow:0 0 0 3px rgba(61,127,212,.15)}
+
+    .table-responsive{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;min-width:1040px;}
+    th,td{border:1px solid var(--border);padding:8px;text-align:center;vertical-align:middle;}
+    th{background:rgba(0,0,0,.28);font-weight:700}
+    td input,td select{padding:7px 9px;border-radius:10px;}
+
+    .pill{display:inline-flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(0,0,0,.18);font-size:13px;color:#fff;}
+    .factor{border:1px solid rgba(255,255,255,.2);padding:12px;border-radius:12px;background:rgba(255,255,255,.03)}
+    .factor .two{display:grid;grid-template-columns:1fr 120px;gap:8px;align-items:center;margin-top:7px}
+
+    .muted{color:var(--muted);font-size:12px;}
+    .kpi{background:var(--soft);border:1px solid rgba(255,255,255,.12);padding:12px;border-radius:14px}
+    .kpi .title{font-size:12px;color:var(--muted)}
+    .kpi .value{font-size:22px;font-weight:900;margin-top:6px}
+    .good{color:var(--good)}
+    .warn{color:var(--warn)}
+
+    button{margin-top:10px;padding:10px;width:100%;background:var(--accent);border:none;color:#fff;border-radius:12px;cursor:pointer;font-weight:800;transition:transform .08s ease, filter .2s ease;}
+    button:hover{filter:brightness(1.06)}
+    button:active{transform:translateY(1px)}
+    button[disabled]{opacity:.65;cursor:not-allowed;filter:none}
+
+    .btn-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+    .btn-danger{background:var(--danger);width:auto;margin-top:0;padding:7px 10px;border-radius:12px;font-weight:800}
+
+    .note{margin-top:10px;padding:12px;border-radius:12px;background:rgba(255,255,255,0.05);border-left:3px solid var(--accent);color:var(--muted);font-size:12px;}
+
+    .tabs{display:flex;gap:10px;flex-wrap:wrap}
+    .tab{padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.16);cursor:pointer;font-weight:800;font-size:13px;user-select:none;}
+    .tab.active{background:rgba(61,127,212,.35);border-color:rgba(61,127,212,.65)}
+
+    .hidden{display:none !important}
+
+    .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;vertical-align:-2px;margin-right:8px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    @media print{
+      body{background:#fff;color:#000;padding:0}
+      .header,.card,.result{background:#fff;box-shadow:none}
+      .tabbar,.actions,.no-print{display:none !important}
+      input,select{border:none;background:transparent;color:#000;box-shadow:none}
+      table,th,td{border:1px solid #000}
+      .result{border:2px solid #000}
+      .muted,.note{color:#333}
+      .kpi{background:#fff;border:1px solid #000}
+      @page{size:A4;margin:18mm}
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="tabbar tabs no-print" style="margin-bottom:10px">
+      <div class="tab active" data-tab="main">กรอกข้อมูล</div>
+      <div class="tab" data-tab="summary">Summary Report</div>
+      <div class="tab" data-tab="sensitivity">Sensitivity Analysis</div>
+    </div>
+
+    <h2>📊 SROI DSS v4.2 <span class="muted">(Summary tabs: ปีที่ 1 / 1-3 / 1-5)</span></h2>
+
+    <div class="grid">
+      <div>
+        <label>ชื่อโครงการ</label>
+        <input id="projectName" placeholder="ชื่อโครงการ"/>
+      </div>
+      <div>
+        <label>แหล่งทุน</label>
+        <input id="funding" placeholder="แหล่งทุน"/>
+      </div>
+      <div>
+        <label>ผู้ดำเนินงาน</label>
+        <input id="owner" placeholder="ผู้ดำเนินงาน"/>
+      </div>
+      <div>
+        <label>งบประมาณลงทุน (บาท) — ถือว่าเกิดปีที่ 0</label>
+        <input id="invest" data-format="int" inputmode="numeric" value="100000"/>
+      </div>
+    </div>
+
+    <div class="grid3" style="margin-top:10px">
+      <div>
+        <label>Discount rate (% ต่อปี) — ใช้คำนวณ NPV</label>
+        <input id="disc" data-format="dec1" inputmode="decimal" value="3.0"/>
+      </div>
+      <div>
+        <label>ปีเริ่มต้นของผลลัพธ์ (สำหรับแท็บหลัก)</label>
+        <input id="startYear" data-format="int" inputmode="numeric" value="1"/>
+        <div class="muted" style="margin-top:6px">* หมายเหตุ: ใน Summary tabs (ปีที่ 1/1-3/1-5) ระบบจะสรุปผลในกรอบปีที่ 1..H โดยอัตโนมัติ</div>
+      </div>
+      <div>
+        <label>หมายเหตุ (จะไปแสดงใน Summary)</label>
+        <input id="notes" placeholder="เช่น ขอบเขตการประเมิน/ข้อจำกัดข้อมูล"/>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MAIN TAB -->
+  <section id="tab-main">
+
+    <div class="card">
+      <h3>Outcome & Financial Proxy</h3>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Outcome</th>
+              <th>Qty</th>
+              <th>หน่วยเวลา</th>
+              <th>มูลค่าต่อหน่วย (บาท)</th>
+              <th>Source</th>
+              <th>Conf</th>
+              <th>ระยะเวลา (ปี)</th>
+              <th>Annual Gross</th>
+              <th>PV (Raw)</th>
+              <th>PV (Adj)</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="body"></tbody>
+        </table>
+      </div>
+      <button id="addRowBtn" type="button">+ เพิ่ม Outcome</button>
+      <div class="muted" style="margin-top:8px">
+        * Annual Gross = Qty × Value × (12 หากเลือก “เดือน”, 1 หากเลือก “ปี”)<br/>
+        * PV = Discounting + Drop-off รายปี (ปีแรกไม่ลด)
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="grid">
+        <label class="pill"><input type="checkbox" id="useConf" checked /> ใช้ Confidence ปรับมูลค่า Outcome</label>
+        <label class="pill"><input type="checkbox" id="includeDrop" checked /> ใช้ Drop-off ในการคิด PV</label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Impact Factors (%)</h3>
+      <div class="grid">
+        <div class="factor">
+          <div><b>Deadweight</b> <span class="muted">(เกิดขึ้นเองตามธรรมชาติ)</span></div>
+          <div class="two">
+            <input type="range" id="dw_s" value="20" min="0" max="100" />
+            <input id="dw" data-format="dec0" inputmode="decimal" value="20" />
+          </div>
+        </div>
+        <div class="factor">
+          <div><b>Attribution</b> <span class="muted">(เป็นฝีมือจากโครงการเรา)</span></div>
+          <div class="two">
+            <input type="range" id="attr_s" value="70" min="0" max="100" />
+            <input id="attr" data-format="dec0" inputmode="decimal" value="70" />
+          </div>
+        </div>
+        <div class="factor">
+          <div><b>Displacement</b> <span class="muted">(ไปแย่งผลประโยชน์ที่อื่นมา)</span></div>
+          <div class="two">
+            <input type="range" id="disp_s" value="10" min="0" max="100" />
+            <input id="disp" data-format="dec0" inputmode="decimal" value="10" />
+          </div>
+        </div>
+        <div class="factor">
+          <div><b>Drop-off</b> <span class="muted">(อัตราลดลงของผลลัพธ์ “ปีถัดไป”)</span></div>
+          <div class="two">
+            <input type="range" id="drop_s" value="15" min="0" max="100" />
+            <input id="drop" data-format="dec0" inputmode="decimal" value="15" />
+          </div>
+          <div class="muted" style="margin-top:6px">* ปีแรกไม่ลด ปีต่อไปลดลงตาม Drop-off</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="result">
+      <h3>ผลลัพธ์ (คำนวณแบบ Present Value / NPV) — แท็บหลัก</h3>
+      <div class="grid4" style="margin-top:10px">
+        <div class="kpi"><div class="title">PV Benefit (Raw)</div><div class="value warn" id="pvRaw">0</div><div class="muted">บาท</div></div>
+        <div class="kpi"><div class="title">PV Benefit (Adjusted)</div><div class="value good" id="pvAdj">0</div><div class="muted">บาท</div></div>
+        <div class="kpi"><div class="title">SROI (Raw)</div><div class="value warn" id="sroiRaw">0.00</div><div class="muted">เท่า</div></div>
+        <div class="kpi"><div class="title">SROI (Adjusted)</div><div class="value good" id="sroiAdj">0.00</div><div class="muted">เท่า</div></div>
+      </div>
+      <div class="grid" style="margin-top:10px">
+        <div class="kpi"><div class="title">NPV (Adjusted) = PV Benefit (Adjusted) - Investment</div><div class="value" id="npv">0</div><div class="muted">บาท</div></div>
+        <div class="kpi"><div class="title">Impact Multiplier (Base) = (1-DW)×Attr×(1-Disp)</div><div class="value" id="mult">0.0000</div><div class="muted">ตัวคูณ</div></div>
+      </div>
+      <div class="card" style="margin-top:12px;background:rgba(255,255,255,0.02)">
+        <canvas id="chartSroi" height="130"></canvas>
+      </div>
+      <div class="note"><b>หมายเหตุ:</b> ผลลัพธ์ในแท็บหลักนี้อิง “ปีเริ่มต้นของผลลัพธ์” (Start year) ตามที่กรอกด้านบน</div>
+      <div class="actions btn-row no-print" style="margin-top:8px">
+        <button id="exportJsonBtn" type="button">⬇️ Export JSON</button>
+        <button id="exportCsvBtn" type="button">⬇️ Export CSV</button>
+        <button id="printBtn" type="button">🖨️ Print / Save as PDF</button>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- SUMMARY TAB -->
+  <section id="tab-summary" class="hidden">
+    <div class="card">
+      <h3>Summary Report (สำหรับพิมพ์/ส่งต่อ)</h3>
+      <div class="tabs no-print" style="margin:8px 0 10px 0">
+        <div class="tab active" data-sumtab="1">ปีที่ 1</div>
+        <div class="tab" data-sumtab="3">ปีที่ 1-3</div>
+        <div class="tab" data-sumtab="5">ปีที่ 1-5</div>
+      </div>
+
+      <div class="grid">
+        <div>
+          <div class="kpi">
+            <div class="title">โครงการ</div>
+            <div class="value" id="sumProject">-</div>
+            <div class="muted" id="sumMeta">-</div>
+          </div>
+          <div class="kpi" style="margin-top:10px">
+            <div class="title">Assumptions</div>
+            <div class="muted" id="sumAssump" style="margin-top:8px;line-height:1.5"></div>
+          </div>
+          <div class="kpi" style="margin-top:10px">
+            <div class="title">ข้อความสรุปผลการประเมิน (Auto-generated)</div>
+            <div class="muted" id="sumNarrative" style="margin-top:8px;line-height:1.65"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="grid">
+            <div class="kpi"><div class="title">Investment</div><div class="value" id="sumInv">0</div><div class="muted">บาท</div></div>
+            <div class="kpi"><div class="title">Discount rate</div><div class="value" id="sumDisc">0</div><div class="muted">% ต่อปี</div></div>
+          </div>
+          <div class="grid" style="margin-top:10px">
+            <div class="kpi"><div class="title">SROI (Adjusted)</div><div class="value good" id="sumSroi">0.00</div><div class="muted">เท่า</div></div>
+            <div class="kpi"><div class="title">NPV (Adjusted)</div><div class="value" id="sumNpv">0</div><div class="muted">บาท</div></div>
+          </div>
+          <div class="card" style="margin-top:12px;background:rgba(255,255,255,0.02)">
+            <canvas id="chartSummary" height="170"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px;background:rgba(255,255,255,0.02)">
+        <h3 style="margin-bottom:8px">Outcome Table (PV ก่อน/หลัง Confidence) — ตามกรอบปีที่เลือก</h3>
+        <div class="table-responsive">
+          <table style="min-width:900px">
+            <thead>
+              <tr>
+                <th>Outcome</th>
+                <th>Qty</th>
+                <th>หน่วยเวลา</th>
+                <th>มูลค่าต่อหน่วย</th>
+                <th>Conf</th>
+                <th>Years</th>
+                <th>PV Raw</th>
+                <th>PV Adj</th>
+              </tr>
+            </thead>
+            <tbody id="sumBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="note"><b>หมายเหตุ:</b> Summary tabs นี้ “ตัดกรอบเวลา” ให้เทียบกันง่าย: ปีที่ 1, ปีที่ 1–3, ปีที่ 1–5</div>
+
+      <div class="actions no-print">
+        <button id="printSummaryBtn" type="button">🖨️ Print Summary / Save as PDF</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SENSITIVITY TAB -->
+  <section id="tab-sensitivity" class="hidden">
+    <div class="card">
+      <h3>Sensitivity Analysis (One-way / Tornado)</h3>
+      <div class="grid">
+        <div>
+          <label>ช่วงการสวิง (±%) สำหรับตัวแปรทั้งหมด</label>
+          <input id="sensSwing" data-format="dec0" inputmode="numeric" value="20" />
+          <div class="muted" style="margin-top:6px">ตัวอย่าง 20 = ทดสอบ Low/High โดยลด/เพิ่ม 20% จากค่าฐาน</div>
+
+          <label style="margin-top:10px">เลือกตัวแปรที่จะทดสอบ</label>
+          <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px">
+            <label class="pill"><input type="checkbox" class="sensVar" value="disc" checked/> Discount rate</label>
+            <label class="pill"><input type="checkbox" class="sensVar" value="dw" checked/> Deadweight</label>
+            <label class="pill"><input type="checkbox" class="sensVar" value="attr" checked/> Attribution</label>
+            <label class="pill"><input type="checkbox" class="sensVar" value="disp" checked/> Displacement</label>
+            <label class="pill"><input type="checkbox" class="sensVar" value="drop" checked/> Drop-off</label>
+            <label class="pill"><input type="checkbox" class="sensVar" value="conf" checked/> Confidence weights</label>
+          </div>
+
+          <button id="runSensBtn" type="button">▶️ Run Sensitivity</button>
+
+          <div class="note">
+            <b>อ่านผลยังไง (สั้น ๆ):</b><br/>
+            1) ปรับตัวแปรทีละตัวเป็น Low/High จากช่วง ±% แล้วดูผลกระทบต่อ <b>SROI (Adjusted)</b><br/>
+            2) กราฟ Tornado: แท่งยาวสุด = ตัวแปรที่กระทบผลลัพธ์มากสุด<br/>
+            3) ใช้เพื่อตัดสินใจว่าจะ “ไปยืนยันสมมติฐานตัวไหนก่อน”
+          </div>
+        </div>
+
+        <div>
+          <div class="card" style="background:rgba(255,255,255,0.02)">
+            <canvas id="chartTornado" height="320"></canvas>
+          </div>
+          <div class="muted">* แท่งยาวสุด = ตัวแปรที่กระทบ SROI มากสุด</div>
+        </div>
+      </div>
+
+      <div class="card" style="background:rgba(255,255,255,0.02)">
+        <h3 style="margin-bottom:8px">Sensitivity Table (SROI Adjusted)</h3>
+        <div class="table-responsive">
+          <table style="min-width:900px">
+            <thead>
+              <tr>
+                <th>Variable</th>
+                <th>Base</th>
+                <th>Low</th>
+                <th>High</th>
+                <th>Δ Range (|High-Low|)</th>
+              </tr>
+            </thead>
+            <tbody id="sensBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+
+<template id="rowTpl">
+  <tr>
+    <td><input data-k="outcome" placeholder="ระบุผลลัพธ์" /></td>
+    <td><input data-k="qty" data-format="int" inputmode="numeric" value="1" /></td>
+    <td>
+      <select data-k="unit">
+        <option value="year">ปี</option>
+        <option value="month">เดือน</option>
+      </select>
+    </td>
+    <td><input data-k="value" data-format="int" inputmode="numeric" value="0" /></td>
+    <td><input data-k="source" placeholder="แหล่งอ้างอิง" /></td>
+    <td>
+      <select data-k="conf">
+        <option value="สูง">สูง (100%)</option>
+        <option value="กลาง" selected>กลาง (75%)</option>
+        <option value="ต่ำ">ต่ำ (50%)</option>
+      </select>
+    </td>
+    <td><input data-k="years" data-format="int" inputmode="numeric" value="1" /></td>
+    <td class="annual">0</td>
+    <td class="pvraw">0</td>
+    <td class="pvadj">0</td>
+    <td><button class="btn-danger" type="button" data-action="remove">ลบ</button></td>
+  </tr>
+</template>
+
+<script>
+(() => {
+  const $ = (sel, root=document) => root.querySelector(sel);
+  const $$ = (sel, root=document) => [...root.querySelectorAll(sel)];
+
+  const fmt0 = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
+  const fmt1 = new Intl.NumberFormat(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+  const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
+  const clamp01 = (x) => clamp(x, 0, 1);
+  const clamp100 = (x) => clamp(x, 0, 100);
+
+  const STORAGE_KEY = 'sroi_dss_v42';
+  let chartSroi, chartSummary, chartTornado;
+  let summaryH = 1; // summary horizon 1 / 3 / 5
+
+  // ---------- Number formatting for inputs (comma friendly) ----------
+  function parseNumber(v){
+    if (v === null || v === undefined) return 0;
+    const s = String(v).replace(/,/g,'').trim();
+    if (s === '') return 0;
+    const n = Number(s);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function formatByType(n, type){
+    if (!Number.isFinite(n)) n = 0;
+    if (type === 'dec1') return fmt1.format(n);
+    return fmt0.format(Math.round(n));
+  }
+
+  function attachFormatBehavior(el){
+    const type = el.getAttribute('data-format');
+    if (!type) return;
+
+    // initial
+    const initial = parseNumber(el.value);
+    el.value = formatByType(initial, type);
+
+    el.addEventListener('focus', () => {
+      const n = parseNumber(el.value);
+      el.value = (type === 'dec1') ? String(n.toFixed(1)) : String(Math.round(n));
+      requestAnimationFrame(() => el.select());
+    });
+
+    el.addEventListener('blur', () => {
+      const n = parseNumber(el.value);
+      el.value = formatByType(n, type);
+    });
+  }
+
+  function wireAllFormatters(root=document){
+    $$('input[data-format]', root).forEach(attachFormatBehavior);
+  }
+
+  // ---------- Model ----------
+  const baseConf = { สูง: 1.00, กลาง: 0.75, ต่ำ: 0.50 };
+  const confWeight = (level, customMap=null) => (customMap || baseConf)[level] ?? 1;
+
+  function annualGross(qty, value, unit){
+    const q = Math.max(0, parseNumber(qty));
+    const v = Math.max(0, parseNumber(value));
+    const m = (unit === 'month') ? 12 : 1;
+    return q * v * m;
+  }
+
+  function readInputs(){
+    const invest = Math.max(1, parseNumber($('#invest').value));
+    const disc = Math.max(0, parseNumber($('#disc').value)) / 100;
+    const startYear = Math.max(1, Math.floor(parseNumber($('#startYear').value)));
+
+    const useConf = $('#useConf').checked;
+    const includeDrop = $('#includeDrop').checked;
+
+    const dw = clamp01(parseNumber($('#dw').value) / 100);
+    const attr = clamp01(parseNumber($('#attr').value) / 100);
+    const disp = clamp01(parseNumber($('#disp').value) / 100);
+    const drop = clamp01(parseNumber($('#drop').value) / 100);
+
+    return { invest, disc, startYear, useConf, includeDrop, dw, attr, disp, drop };
+  }
+
+  function baseImpactMultiplier({dw, attr, disp}){
+    return (1 - dw) * attr * (1 - disp);
+  }
+
+  // PV series with optional drop-off and an optional capYears
+  function pvSeries(annual, years, {disc, startYear, drop, includeDrop}, capYears=null){
+    let y = Math.max(1, Math.floor(parseNumber(years) || 1));
+    if (capYears !== null && capYears !== undefined) y = Math.max(1, Math.min(y, Math.floor(capYears)));
+
+    const df = includeDrop ? (1 - drop) : 1;
+    let pv = 0;
+    for (let t = 0; t < y; t++){
+      const yearIndex = (startYear - 1) + t;
+      const val = annual * Math.pow(df, t);
+      const discDen = Math.pow(1 + disc, yearIndex);
+      pv += discDen ? (val / discDen) : val;
+    }
+    return pv;
+  }
+
+  function computeRow(tr, inputs, confMap=null){
+    const get = (k) => tr.querySelector(`[data-k="${k}"]`)?.value ?? '';
+
+    const outcome = get('outcome');
+    const qty = get('qty');
+    const unit = get('unit');
+    const value = get('value');
+    const source = get('source');
+    const conf = get('conf');
+    const years = get('years');
+
+    const annual = annualGross(qty, value, unit);
+    const capYears = inputs._capYears ?? null;
+    const pvRaw = pvSeries(annual, years, inputs, capYears);
+    const pvAdj = inputs.useConf ? pvRaw * confWeight(conf, confMap) : pvRaw;
+
+    tr.querySelector('.annual').textContent = fmt0.format(annual);
+    tr.querySelector('.pvraw').textContent = fmt0.format(pvRaw);
+    tr.querySelector('.pvadj').textContent = fmt0.format(pvAdj);
+
+    return {
+      outcome,
+      qty: parseNumber(qty),
+      unit,
+      value: parseNumber(value),
+      source,
+      conf,
+      years: Math.max(1, Math.floor(parseNumber(years) || 1)),
+      annual,
+      pvRaw,
+      pvAdj
+    };
+  }
+
+  function computeAll(confMap=null){
+    const inputs = readInputs();
+    const mult = baseImpactMultiplier(inputs);
+
+    const rows = $$('#body tr');
+    const rowData = rows.map(tr => computeRow(tr, inputs, confMap));
+
+    const pvRawSum = rowData.reduce((s,r)=>s + r.pvRaw, 0) * mult;
+    const pvAdjSum = rowData.reduce((s,r)=>s + r.pvAdj, 0) * mult;
+
+    const sroiRaw = pvRawSum / inputs.invest;
+    const sroiAdj = pvAdjSum / inputs.invest;
+    const npvAdj  = pvAdjSum - inputs.invest;
+
+    const maxYears = rowData.length ? Math.max(...rowData.map(r => r.years)) : 1;
+    const yearStart = inputs.startYear;
+    const yearEnd   = inputs.startYear + maxYears - 1;
+
+    return { inputs, mult, rowData, pvRawSum, pvAdjSum, sroiRaw, sroiAdj, npvAdj, maxYears, yearStart, yearEnd };
+  }
+
+  // Summary computation: fix year window to ปีที่ 1..H (H = 1 / 3 / 5)
+  function computeSummaryAll(horizon){
+    const base = readInputs();
+    const inputs = { ...base, startYear: 1, _capYears: horizon };
+    const mult = baseImpactMultiplier(inputs);
+
+    const rows = $$('#body tr');
+    const rowData = rows.map(tr => computeRow(tr, inputs, null));
+
+    const pvRawSum = rowData.reduce((s,r)=>s + r.pvRaw, 0) * mult;
+    const pvAdjSum = rowData.reduce((s,r)=>s + r.pvAdj, 0) * mult;
+
+    const sroiRaw = pvRawSum / inputs.invest;
+    const sroiAdj = pvAdjSum / inputs.invest;
+    const npvAdj  = pvAdjSum - inputs.invest;
+
+    return { inputs, mult, rowData, pvRawSum, pvAdjSum, sroiRaw, sroiAdj, npvAdj, maxYears: horizon, yearStart: 1, yearEnd: horizon };
+  }
+
+  // ---------- Smooth number update ----------
+  function tweenNumber(el, to, decimals=0, duration=420){
+    const from = parseNumber(el.textContent);
+    const start = performance.now();
+    function easeOutCubic(t){ return 1 - Math.pow(1-t, 3); }
+    function step(now){
+      const p = Math.min(1, (now - start) / duration);
+      const v = from + (to - from) * easeOutCubic(p);
+      el.textContent = decimals ? v.toFixed(decimals) : fmt0.format(v);
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  // ---------- Render ----------
+  function render(){
+    const res = computeAll();
+
+    tweenNumber($('#pvRaw'), res.pvRawSum, 0);
+    tweenNumber($('#pvAdj'), res.pvAdjSum, 0);
+    $('#sroiRaw').textContent = isFinite(res.sroiRaw) ? res.sroiRaw.toFixed(2) : '0.00';
+    $('#sroiAdj').textContent = isFinite(res.sroiAdj) ? res.sroiAdj.toFixed(2) : '0.00';
+    tweenNumber($('#npv'), res.npvAdj, 0);
+    $('#mult').textContent = res.mult.toFixed(4);
+
+    drawSroiChart(res);
+    renderSummary();
+    saveState();
+  }
+
+  function drawSroiChart(res){
+    const ctx = $('#chartSroi');
+    const labels = ['SROI Raw', 'SROI Adjusted'];
+    const data = [res.sroiRaw, res.sroiAdj];
+
+    if (chartSroi) chartSroi.destroy();
+    chartSroi = new Chart(ctx, {
+      type: 'bar',
+      data: { labels, datasets: [{ label:'SROI (เท่า)', data, backgroundColor:['#f4c94e','#2ec4a6'], borderWidth:0, borderRadius:10 }] },
+      options: {
+        responsive:true,
+        animation:{ duration:650, easing:'easeOutQuart' },
+        plugins:{ legend:{ display:false } },
+        scales:{ y:{ grid:{ color:'rgba(255,255,255,0.10)' }, ticks:{ color:'white' } }, x:{ ticks:{ color:'white' } } }
+      }
+    });
+  }
+
+  function escapeHtml(s){
+    return String(s)
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'",'&#039;');
+  }
+
+  function renderSummary(){
+    const res = computeSummaryAll(summaryH);
+
+    $('#sumProject').textContent = $('#projectName').value || '-';
+    const meta = [
+      ($('#funding').value ? `แหล่งทุน: ${$('#funding').value}` : null),
+      ($('#owner').value ? `ผู้ดำเนินงาน: ${$('#owner').value}` : null)
+    ].filter(Boolean).join(' • ');
+    $('#sumMeta').textContent = meta || '-';
+
+    $('#sumInv').textContent = fmt0.format(res.inputs.invest);
+    $('#sumDisc').textContent = (res.inputs.disc*100).toFixed(1);
+    $('#sumSroi').textContent = isFinite(res.sroiAdj) ? res.sroiAdj.toFixed(2) : '0.00';
+    $('#sumNpv').textContent = fmt0.format(res.npvAdj);
+
+    const assump = [
+      `สรุปกรอบเวลา: ปีที่ 1 ถึงปีที่ ${res.yearEnd} (รวม ${res.maxYears} ปี)`,
+      `Discount rate: ${(res.inputs.disc*100).toFixed(1)}% ต่อปี`,
+      `Impact factors: Deadweight ${Math.round(res.inputs.dw*100)}%, Attribution ${Math.round(res.inputs.attr*100)}%, Displacement ${Math.round(res.inputs.disp*100)}%`,
+      `Drop-off: ${Math.round(res.inputs.drop*100)}% ต่อปี (${res.inputs.includeDrop ? 'เปิดใช้' : 'ปิด'})`,
+      `Confidence adjustment: ${res.inputs.useConf ? 'เปิดใช้' : 'ปิด'}`
+    ].join('<br/>');
+
+    const notes = $('#notes').value?.trim();
+    $('#sumAssump').innerHTML = assump + (notes ? `<br/><br/><b>หมายเหตุ:</b> ${escapeHtml(notes)}` : '');
+
+    const proj = escapeHtml($('#projectName').value || 'โครงการนี้');
+    const inv  = fmt0.format(res.inputs.invest);
+    const pv   = fmt0.format(res.pvAdjSum);
+    const sroi = isFinite(res.sroiAdj) ? res.sroiAdj.toFixed(2) : '0.00';
+    const npv  = fmt0.format(res.npvAdj);
+
+    $('#sumNarrative').innerHTML = `
+      เราประเมิน <b>${proj}</b> โดยแปลงผลลัพธ์เป็นมูลค่าเงิน (Financial proxy) แล้วคำนวณเป็นมูลค่าปัจจุบัน (Present Value) ด้วย Discount rate ${(res.inputs.disc*100).toFixed(1)}% ต่อปี จากนั้นปรับลดด้วย Deadweight/Attribution/Displacement และ Drop-off เพื่อหลีกเลี่ยงการประเมินเกินจริง<br/><br/>
+      <b>กรอบเวลาที่สรุป:</b> ปีที่ 1–${res.yearEnd} (รวม ${res.maxYears} ปี) ได้ PV Benefit (Adjusted) <b>${pv}</b> บาท เทียบกับเงินลงทุน <b>${inv}</b> บาท จึงได้ <b>SROI (Adjusted) = ${sroi} เท่า</b> และ <b>NPV (Adjusted) = ${npv} บาท</b>.
+    `;
+
+    // outcome table
+    const tb = $('#sumBody');
+    tb.innerHTML = '';
+    res.rowData.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="text-align:left">${escapeHtml(r.outcome || '-')}${r.source ? `<div class="muted">Source: ${escapeHtml(r.source)}</div>` : ''}</td>
+        <td>${fmt0.format(r.qty)}</td>
+        <td>${r.unit === 'month' ? 'เดือน' : 'ปี'}</td>
+        <td>${fmt0.format(r.value)}</td>
+        <td>${escapeHtml(r.conf)}</td>
+        <td>${fmt0.format(Math.min(r.years, res.maxYears))}</td>
+        <td>${fmt0.format(r.pvRaw)}</td>
+        <td>${fmt0.format(r.pvAdj)}</td>
+      `;
+      tb.appendChild(tr);
+    });
+
+    // chart
+    const ctx = $('#chartSummary');
+    if (chartSummary) chartSummary.destroy();
+    chartSummary = new Chart(ctx, {
+      data: {
+        labels: ['Investment', `PV Benefit (Adj) ปีที่ 1-${res.yearEnd}`, `NPV (Adj) ปีที่ 1-${res.yearEnd}`],
+        datasets: [{
+          type:'bar',
+          data: [res.inputs.invest, res.pvAdjSum, res.npvAdj],
+          backgroundColor: ['rgba(255,255,255,.18)', '#2ec4a6', 'rgba(61,127,212,.65)'],
+          borderRadius: 10,
+          borderWidth: 0
+        }]
+      },
+      options:{
+        responsive:true,
+        animation:{ duration:650, easing:'easeOutQuart' },
+        plugins:{ legend:{ display:false } },
+        scales:{
+          y:{ grid:{ color:'rgba(255,255,255,0.10)' }, ticks:{ color:'white', callback:(v)=>fmt0.format(v) } },
+          x:{ ticks:{ color:'white' } }
+        }
+      }
+    });
+  }
+
+  // ---------- Sensitivity ----------
+  function runSensitivity(){
+    const btn = $('#runSensBtn');
+    btn.disabled = true;
+    const oldLabel = btn.textContent;
+    btn.innerHTML = `<span class="spinner"></span>กำลังคำนวณ...`;
+
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        const swingPct = clamp(parseNumber($('#sensSwing').value) || 20, 1, 80) / 100;
+        const selected = $$('.sensVar').filter(x=>x.checked).map(x=>x.value);
+
+        const base = computeAll();
+        const baseVal = base.sroiAdj;
+
+        function setTemp(varName, val){
+          const map = { disc:'#disc', dw:'#dw', attr:'#attr', disp:'#disp', drop:'#drop' };
+          const sel = map[varName];
+          if (!sel) return;
+          $(sel).value = String(val);
+          const id = sel.replace('#','');
+          const slider = $(`#${id}_s`);
+          if (slider) slider.value = String(val);
+          attachFormatBehavior($(sel));
+        }
+
+        const confMapLow  = () => ({ สูง:1.0, กลาง: clamp(baseConf.กลาง*(1-swingPct), 0.1, 1.0), ต่ำ: clamp(baseConf.ต่ำ*(1-swingPct), 0.05, 1.0) });
+        const confMapHigh = () => ({ สูง:1.0, กลาง: clamp(baseConf.กลาง*(1+swingPct), 0.1, 1.0), ต่ำ: clamp(baseConf.ต่ำ*(1+swingPct), 0.05, 1.0) });
+
+        const snapshot = {
+          disc: parseNumber($('#disc').value),
+          dw: parseNumber($('#dw').value),
+          attr: parseNumber($('#attr').value),
+          disp: parseNumber($('#disp').value),
+          drop: parseNumber($('#drop').value)
+        };
+
+        const calcWith = (confMap=null) => computeAll(confMap).sroiAdj;
+        const rows = [];
+
+        for (const v of selected){
+          let low, high;
+          if (v === 'conf'){
+            low  = calcWith(confMapLow());
+            high = calcWith(confMapHigh());
+          } else {
+            const baseValue = snapshot[v];
+            let lowValue  = baseValue * (1 - swingPct);
+            let highValue = baseValue * (1 + swingPct);
+
+            if (v === 'disc'){
+              lowValue  = Math.max(0, lowValue);
+              highValue = Math.max(0, highValue);
+            } else {
+              lowValue  = clamp100(lowValue);
+              highValue = clamp100(highValue);
+            }
+
+            setTemp(v, lowValue);
+            low = calcWith(null);
+            setTemp(v, highValue);
+            high = calcWith(null);
+            setTemp(v, baseValue);
+          }
+
+          const lo = Math.min(low, high);
+          const hi = Math.max(low, high);
+          const range = Math.abs(hi - lo);
+          rows.push({ var:v, base: baseVal, low: lo, high: hi, range, dLow: lo - baseVal, dHigh: hi - baseVal });
+        }
+
+        setTemp('disc', snapshot.disc);
+        setTemp('dw', snapshot.dw);
+        setTemp('attr', snapshot.attr);
+        setTemp('disp', snapshot.disp);
+        setTemp('drop', snapshot.drop);
+
+        rows.sort((a,b)=>b.range - a.range);
+
+        const tb = $('#sensBody');
+        tb.innerHTML = '';
+        rows.forEach(r=>{
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td style="text-align:left">${labelVar(r.var)}</td>
+            <td>${baseVal.toFixed(2)}</td>
+            <td>${r.low.toFixed(2)}</td>
+            <td>${r.high.toFixed(2)}</td>
+            <td>${r.range.toFixed(2)}</td>
+          `;
+          tb.appendChild(tr);
+        });
+
+        const labels = rows.map(r => labelVar(r.var));
+        const data = rows.map(r => [Math.min(r.dLow, r.dHigh), Math.max(r.dLow, r.dHigh)]);
+
+        const ctx = $('#chartTornado');
+        if (chartTornado) chartTornado.destroy();
+        chartTornado = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              data,
+              backgroundColor: 'rgba(61,127,212,.65)',
+              borderRadius: 10,
+              borderWidth: 0
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive:true,
+            animation:{ duration:750, easing:'easeOutQuart' },
+            plugins:{
+              legend:{ display:false },
+              tooltip:{
+                callbacks:{
+                  label:(ctx)=>{ const [a,b]=ctx.raw; return `ΔSROI: ${a.toFixed(2)} ถึง ${b.toFixed(2)} (Base ${baseVal.toFixed(2)})`; }
+                }
+              }
+            },
+            scales:{
+              x:{ grid:{ color:'rgba(255,255,255,0.10)' }, ticks:{ color:'white' }, title:{ display:true, text:'ผลกระทบต่อ SROI (Δ จาก Base)', color:'white' } },
+              y:{ ticks:{ color:'white' } }
+            }
+          }
+        });
+
+        render();
+        btn.disabled = false;
+        btn.textContent = oldLabel;
+      }, 40);
+    });
+  }
+
+  function labelVar(v){
+    switch(v){
+      case 'disc': return 'Discount rate';
+      case 'dw': return 'Deadweight';
+      case 'attr': return 'Attribution';
+      case 'disp': return 'Displacement';
+      case 'drop': return 'Drop-off';
+      case 'conf': return 'Confidence weights';
+      default: return v;
+    }
+  }
+
+  // ---------- Export ----------
+  function getExportData(){
+    const res = computeAll();
+    return {
+      meta: {
+        projectName: $('#projectName').value,
+        funding: $('#funding').value,
+        owner: $('#owner').value,
+        notes: $('#notes').value,
+        generatedAt: new Date().toISOString()
+      },
+      assumptions: {
+        investment: res.inputs.invest,
+        discountRate: res.inputs.disc,
+        startYear: res.inputs.startYear,
+        evaluationYearsMax: res.maxYears,
+        useConfidence: res.inputs.useConf,
+        includeDropOff: res.inputs.includeDrop,
+        deadweight: res.inputs.dw,
+        attribution: res.inputs.attr,
+        displacement: res.inputs.disp,
+        dropOff: res.inputs.drop,
+        impactMultiplierBase: res.mult
+      },
+      outcomes: res.rowData,
+      results: {
+        pvBenefitRaw: res.pvRawSum,
+        pvBenefitAdjusted: res.pvAdjSum,
+        sroiRaw: res.sroiRaw,
+        sroiAdjusted: res.sroiAdj,
+        npvAdjusted: res.npvAdj
+      }
+    };
+  }
+
+  function download(filename, mime, content){
+    const blob = new Blob([content], {type: mime});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+  }
+
+  function safeFileName(s){
+    return String(s).trim().replace(/[^\w\u0E00-\u0E7F-]+/g,'_').replace(/_+/g,'_').slice(0,80) || 'SROI';
+  }
+
+  function exportJSON(){
+    const data = getExportData();
+    download(`${safeFileName($('#projectName').value)}_SROI.json`, 'application/json;charset=utf-8', JSON.stringify(data, null, 2));
+  }
+
+  function exportCSV(){
+    const data = getExportData();
+    const rows = [];
+    rows.push(['Project', data.meta.projectName]);
+    rows.push(['Funding', data.meta.funding]);
+    rows.push(['Owner', data.meta.owner]);
+    rows.push(['GeneratedAt', data.meta.generatedAt]);
+    rows.push([]);
+
+    rows.push(['Investment', data.assumptions.investment]);
+    rows.push(['DiscountRate', data.assumptions.discountRate]);
+    rows.push(['StartYear', data.assumptions.startYear]);
+    rows.push(['EvaluationYearsMax', data.assumptions.evaluationYearsMax]);
+    rows.push(['Deadweight', data.assumptions.deadweight]);
+    rows.push(['Attribution', data.assumptions.attribution]);
+    rows.push(['Displacement', data.assumptions.displacement]);
+    rows.push(['DropOff', data.assumptions.dropOff]);
+    rows.push(['ImpactMultiplierBase', data.assumptions.impactMultiplierBase]);
+    rows.push([]);
+
+    rows.push(['PVBenefitRaw', data.results.pvBenefitRaw]);
+    rows.push(['PVBenefitAdjusted', data.results.pvBenefitAdjusted]);
+    rows.push(['SROIRaw', data.results.sroiRaw]);
+    rows.push(['SROIAdjusted', data.results.sroiAdjusted]);
+    rows.push(['NPVAdjusted', data.results.npvAdjusted]);
+    rows.push([]);
+
+    rows.push(['Outcome','Qty','Unit','Value','Source','Confidence','Years','AnnualGross','PVRaw','PVAdj']);
+    data.outcomes.forEach(o => rows.push([o.outcome,o.qty,o.unit,o.value,o.source,o.conf,o.years,o.annual,o.pvRaw,o.pvAdj]));
+
+    const csv = rows.map(r => r.map(x => {
+      const s = (x ?? '').toString();
+      const v = s.replaceAll('"','""');
+      return /[\n\r,\"]/.test(v) ? `"${v}"` : v;
+    }).join(',')).join('\n');
+
+    download(`${safeFileName($('#projectName').value)}_SROI.csv`, 'text/csv;charset=utf-8', csv);
+  }
+
+  // ---------- State ----------
+  function saveState(){
+    const rows = $$('#body tr').map(tr => {
+      const get = (k) => tr.querySelector(`[data-k="${k}"]`)?.value ?? '';
+      return { outcome:get('outcome'), qty:get('qty'), unit:get('unit'), value:get('value'), source:get('source'), conf:get('conf'), years:get('years') };
+    });
+
+    const state = {
+      projectName: $('#projectName').value,
+      funding: $('#funding').value,
+      owner: $('#owner').value,
+      notes: $('#notes').value,
+      invest: $('#invest').value,
+      disc: $('#disc').value,
+      startYear: $('#startYear').value,
+      useConf: $('#useConf').checked,
+      includeDrop: $('#includeDrop').checked,
+      dw: $('#dw').value,
+      attr: $('#attr').value,
+      disp: $('#disp').value,
+      drop: $('#drop').value,
+      sensSwing: $('#sensSwing').value,
+      summaryH,
+      rows
+    };
+
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
+  }
+
+  function setFactor(type, val){
+    const n = clamp100(parseNumber(val));
+    $(`#${type}`).value = String(n);
+    const slider = $(`#${type}_s`);
+    if (slider) slider.value = String(n);
+  }
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      const s = JSON.parse(raw);
+
+      $('#projectName').value = s.projectName ?? '';
+      $('#funding').value = s.funding ?? '';
+      $('#owner').value = s.owner ?? '';
+      $('#notes').value = s.notes ?? '';
+
+      $('#invest').value = s.invest ?? '100000';
+      $('#disc').value = s.disc ?? '3.0';
+      $('#startYear').value = s.startYear ?? '1';
+      $('#sensSwing').value = s.sensSwing ?? '20';
+
+      $('#useConf').checked = !!s.useConf;
+      $('#includeDrop').checked = s.includeDrop !== false;
+
+      setFactor('dw', s.dw ?? 20);
+      setFactor('attr', s.attr ?? 70);
+      setFactor('disp', s.disp ?? 10);
+      setFactor('drop', s.drop ?? 15);
+
+      summaryH = s.summaryH ?? 1;
+      // set active summary subtab
+      $$('#tab-summary .tab[data-sumtab]').forEach(t => t.classList.toggle('active', parseInt(t.dataset.sumtab,10) === summaryH));
+
+      $('#body').innerHTML = '';
+      if (Array.isArray(s.rows) && s.rows.length){
+        s.rows.forEach(r => addRow(r));
+      } else {
+        addRow();
+      }
+
+      wireAllFormatters();
+      return true;
+    } catch(e){
+      return false;
+    }
+  }
+
+  // ---------- Rows ----------
+  function addRow(prefill={}){
+    const tpl = $('#rowTpl');
+    const tr = tpl.content.firstElementChild.cloneNode(true);
+
+    for (const [k,v] of Object.entries(prefill)){
+      const el = tr.querySelector(`[data-k="${k}"]`);
+      if (el) el.value = v;
+    }
+
+    $('#body').appendChild(tr);
+    wireAllFormatters(tr);
+    render();
+  }
+
+  function removeRow(tr){
+    tr?.remove();
+    if (!$('#body tr')) addRow();
+    render();
+  }
+
+  // ---------- Factor sync ----------
+  function wireFactor(type){
+    const num = $(`#${type}`);
+    const rng = $(`#${type}_s`);
+    const handler = (v) => { setFactor(type, v); render(); };
+    num.addEventListener('input', () => handler(num.value));
+    rng.addEventListener('input', () => handler(rng.value));
+  }
+
+  // ---------- Tabs ----------
+  function showTab(name){
+    $$('.tab[data-tab]').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+    $('#tab-main').classList.toggle('hidden', name !== 'main');
+    $('#tab-summary').classList.toggle('hidden', name !== 'summary');
+    $('#tab-sensitivity').classList.toggle('hidden', name !== 'sensitivity');
+    render();
+  }
+
+  // ---------- Wire events ----------
+  function wire(){
+    wireAllFormatters();
+
+    // top-level tabs
+    $$('.tab[data-tab]').forEach(t => t.addEventListener('click', () => showTab(t.dataset.tab)));
+
+    // summary horizon tabs
+    $$('#tab-summary .tab[data-sumtab]').forEach(t => t.addEventListener('click', () => {
+      $$('#tab-summary .tab[data-sumtab]').forEach(x => x.classList.toggle('active', x === t));
+      summaryH = parseInt(t.dataset.sumtab, 10) || 1;
+      render();
+    }));
+
+    // add row
+    $('#addRowBtn').addEventListener('click', () => addRow());
+
+    // table delegation
+    $('#body').addEventListener('input', (e) => { if (e.target.matches('input,select')) render(); });
+    $('#body').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action="remove"]');
+      if (!btn) return;
+      removeRow(btn.closest('tr'));
+    });
+
+    // top inputs
+    ['projectName','funding','owner','notes','invest','disc','startYear','useConf','includeDrop','sensSwing']
+      .forEach(id => {
+        const el = document.getElementById(id);
+        el.addEventListener('input', render);
+        el.addEventListener('change', render);
+      });
+
+    // factors
+    ['dw','attr','disp','drop'].forEach(wireFactor);
+
+    // export
+    $('#exportJsonBtn').addEventListener('click', exportJSON);
+    $('#exportCsvBtn').addEventListener('click', exportCSV);
+
+    // print
+    $('#printBtn').addEventListener('click', () => window.print());
+    $('#printSummaryBtn').addEventListener('click', () => { showTab('summary'); window.print(); });
+
+    // sensitivity
+    $('#runSensBtn').addEventListener('click', runSensitivity);
+  }
+
+  // init
+  wire();
+  const loaded = loadState();
+  if (!loaded){
+    addRow();
+    wireAllFormatters();
+  }
+  render();
+
+})();
+</script>
+</body>
+</html>
